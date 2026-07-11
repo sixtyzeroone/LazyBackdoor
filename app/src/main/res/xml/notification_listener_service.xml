@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Notification Listener Service Configuration
+    File ini digunakan oleh NotificationListenerService
+-->
+<notification-listener-service
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:label="Lazy Notification Listener"
+    android:notificationTimeout="0"
+    android:settingsActivity="com.lazyframework.backdoor.MainActivity" />

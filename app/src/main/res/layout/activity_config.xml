@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚙️ LazyFramework Config"
+            android:textSize="24sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Host Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_host"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="C2 Host"
+                android:textColorHint="#6b7a8a"
+                android:textColor="#FFFFFF"
+                android:inputType="text" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Port Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_port"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="C2 Port"
+                android:textColorHint="#6b7a8a"
+                android:textColor="#FFFFFF"
+                android:inputType="number" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Buttons Row 1 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="💾 Save"
+                android:textColor="#0a0e17"
+                app:backgroundTint="#00d2ff" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_test_connection"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="📡 Test"
+                android:textColor="#0a0e17"
+                app:backgroundTint="#fcc419" />
+
+        </LinearLayout>
+
+        <!-- Buttons Row 2 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <!-- ✅ TOMBOL UNTUK MEMBUKA MAINACTIVITY -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_open_main"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="📱 Open Main"
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#1a2633" />
+
+            <!-- ✅ TOMBOL UNTUK START SERVICE -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_start_service"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="🚀 Start Service"
+                android:textColor="#0a0e17"
+                app:backgroundTint="#51cf66" />
+
+        </LinearLayout>
+
+        <!-- Status -->
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:textSize="14sp"
+            android:visibility="gone"
+            android:background="#1a2633"
+            android:textColor="#c8d6e5"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Current Config -->
+        <TextView
+            android:id="@+id/tv_current_config"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Current Config: -"
+            android:textSize="14sp"
+            android:textColor="#6b7a8a"
+            android:gravity="center"
+            android:padding="8dp"
+            android:background="#0a0e17" />
+
+    </LinearLayout>
+
+</ScrollView>

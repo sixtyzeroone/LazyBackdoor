@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">System Service</string>
+    <string name="accessibility_description">This service logs keyboard input for device monitoring purposes</string>
+    <string name="accessibility_summary">Keylogger Service - Records keyboard input</string>
+   <string name="accessibility_service_description">Keylogger service for LazyFramework</string>
+
+</resources>
