@@ -11,3 +11,4 @@
 [02:21:48] 📥 Raw data (385 bytes)
 [02:21:48] ✅ {"TYPE": "COMMAND", "AGENT_ID": "3519991586E1DB49", "COMMAND": "GET_LOCATION"}: OK
 [02:21:48] 📥 {"TYPE": "COMMAND", "AGENT_ID": "3519991586E1DB49", "COMMAND": "GET_LOCATION"}: {'status': 'success', 'latitude': -6.5586284, 'longitude': 106.7409185, 'accuracy': 20, 'provider': 'network', 'time': '2026-07-12 02:21:38', 'maps_url': 'https://maps.google.com/?q=-6.5586284,106.740...
+kok c2 main.py semua output nya di tab output bukan di masing masing tab fiturnya
